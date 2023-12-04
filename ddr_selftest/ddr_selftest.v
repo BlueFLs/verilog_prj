@@ -132,17 +132,10 @@ reg           R_fail               ;
 reg           R_fail_d1            ;
 wire          W_fail_r             ;
 
-reg [7:0]     R_ddr0_err           ;
-reg [7:0]     R_ddr1_err           ;
-reg [7:0]     R_ddr2_err           ;
-reg [7:0]     R_ddr3_err           ;
-
-wire          W_ddr0_err           ;
-wire          W_ddr1_err           ;
-wire          W_ddr2_err           ;
-wire          W_ddr3_err           ;
-
-genvar        i ;
+reg           R_ddr0_err           ;
+reg           R_ddr1_err           ;
+reg           R_ddr2_err           ;
+reg           R_ddr3_err           ;
 
 //-- cdc
 always @(posedge W_uclk)
@@ -651,67 +644,53 @@ begin
     O_fail_fact_data <= O_fail_fact_data;
 end
 
-generate
+always @(posedge W_uclk)
+begin
+  if(W_urst)
+    R_ddr0_err <= 1'b0;
+  else if(R_st_st)
+    R_ddr0_err <= 1'b0;
+  else if(O_fail_right_data[127:0] != O_fail_fact_data[127:0])
+    R_ddr0_err <= 1'b1;
+  else
+    R_ddr0_err <= R_ddr0_err;
+end
 
-for(i = 0; i<8; i = i+1)
-  begin: ddr_err_loop
+always @(posedge W_uclk)
+begin
+  if(W_urst)
+    R_ddr1_err <= 1'b0;
+  else if(R_st_st)
+    R_ddr1_err <= 1'b0;
+  else if(O_fail_right_data[255:128] != O_fail_fact_data[255:128])
+    R_ddr1_err <= 1'b1;
+  else
+    R_ddr1_err <= R_ddr1_err;
+end
 
-    always @(posedge W_uclk)
-    begin
-      if(W_urst)
-        R_ddr0_err[i] <= 1'b0;
-      else if(R_st_st)
-        R_ddr0_err[i] <= 1'b0;
-      else if(O_fail_right_data[i*64 +: 16] != O_fail_fact_data[i*64 +: 16])
-        R_ddr0_err[i] <= 1'b1;
-      else
-        R_ddr0_err[i] <= R_ddr0_err[i];
-    end
+always @(posedge W_uclk)
+begin
+  if(W_urst)
+    R_ddr2_err <= 1'b0;
+  else if(R_st_st)
+    R_ddr2_err <= 1'b0;
+  else if(O_fail_right_data[383:256] != O_fail_fact_data[383:256])
+    R_ddr2_err <= 1'b1;
+  else
+    R_ddr2_err <= R_ddr2_err;
+end
 
-    always @(posedge W_uclk)
-    begin
-      if(W_urst)
-        R_ddr1_err[i] <= 1'b0;
-      else if(R_st_st)
-        R_ddr1_err[i] <= 1'b0;
-      else if(O_fail_right_data[i*64+16 +: 16] != O_fail_fact_data[i*64+16 +: 16])
-        R_ddr1_err[i] <= 1'b1;
-      else
-        R_ddr1_err[i] <= R_ddr1_err[i];
-    end
-
-    always @(posedge W_uclk)
-    begin
-      if(W_urst)
-        R_ddr2_err[i] <= 1'b0;
-      else if(R_st_st)
-        R_ddr2_err[i] <= 1'b0;
-      else if(O_fail_right_data[i*64+32 +: 16] != O_fail_fact_data[i*64+32 +: 16])
-        R_ddr2_err[i] <= 1'b1;
-      else
-        R_ddr2_err[i] <= R_ddr2_err[i];
-    end
-
-    always @(posedge W_uclk)
-    begin
-      if(W_urst)
-        R_ddr3_err[i] <= 1'b0;
-      else if(R_st_st)
-        R_ddr3_err[i] <= 1'b0;
-      else if(O_fail_right_data[i*64+48 +: 16] != O_fail_fact_data[i*64+48 +: 16])
-        R_ddr3_err[i] <= 1'b1;
-      else
-        R_ddr3_err[i] <= R_ddr3_err[i];
-    end
-
-  end
-
-endgenerate
-
-assign W_ddr0_err = |R_ddr0_err;
-assign W_ddr1_err = |R_ddr1_err;
-assign W_ddr2_err = |R_ddr2_err;
-assign W_ddr3_err = |R_ddr3_err;
+always @(posedge W_uclk)
+begin
+  if(W_urst)
+    R_ddr3_err <= 1'b0;
+  else if(R_st_st)
+    R_ddr3_err <= 1'b0;
+  else if(O_fail_right_data[511:384] != O_fail_fact_data[511:384])
+    R_ddr3_err <= 1'b1;
+  else
+    R_ddr3_err <= R_ddr3_err;
+end
 
 always @(posedge W_uclk)
 begin
@@ -720,7 +699,7 @@ begin
   else if(R_st_st)
     O_err_ddr_num <= 4'd0;
   else
-    O_err_ddr_num <= {W_ddr3_err, W_ddr2_err, W_ddr1_err, W_ddr0_err};
+    O_err_ddr_num <= {R_ddr3_err, R_ddr2_err, R_ddr1_err, R_ddr0_err};
 end
 
 always @(posedge W_uclk)
