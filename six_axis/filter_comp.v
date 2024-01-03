@@ -84,8 +84,7 @@ reg  signed [15:0] R_acc_tan_data_d5;
 
 reg  signed [31:0] R_gyro_xa;
 reg  signed [31:0] R_gyro_xb;
-reg  signed [31:0] R_gyro_xc;
-
+  
 reg                R_gyro_vld;
 reg                R_gyro_vld_d1;
 reg                R_gyro_vld_d2;
@@ -248,7 +247,7 @@ arctan_fliter u_arctan (
   .m_axis_dout_tdata      (W_acc_tan_dout         )   // 2QN output wire [15 : 0] m_axis_dout_tdata
 );
 
-/-- gyro_xa = gyro_xa + gyro_xp(+-1000,32.8lsb/s) * dt(250hz)
+//-- gyro_xa = gyro_xa + gyro_xp(+-1000,32.8lsb/s) * dt(250hz)
 //-- gyro_xa = gyro_xa + gyro_x/32.8 * 1/250
 //-- gyro_xa = gyro_xa  + gyro_x
 //
@@ -316,7 +315,7 @@ begin
     R_gyro_xa <= 32'sd0;
   else if(R_gyro_xa >= P_P360_M8192 )
     R_gyro_xa <= R_gyro_xa - P_P360_M8192;
-  else if(R_gyro_xa <= P_N360_M8192 )
+  else if(R_gyro_xa < P_N360_M8192 )
     R_gyro_xa <= R_gyro_xa + P_P360_M8192;
   else if(R_gyro_vld)
     R_gyro_xa <= R_gyro_xa + R_gyro_x_t ;
@@ -330,18 +329,10 @@ begin
     R_gyro_xb <= 32'sd0;
   else if(R_gyro_xa >= P_P180_M8192 )
     R_gyro_xb <= R_gyro_xa - P_P360_M8192;
-  else if(R_gyro_xa <= P_N180_M8192 )
+  else if(R_gyro_xa < P_N180_M8192 )
     R_gyro_xb <= P_P360_M8192 + R_gyro_xa;
   else
     R_gyro_xb <= R_gyro_xa;
-end
-
-always @(posedge I_clk)
-begin
-  if(!I_rst_n)
-    R_gyro_xc <= 'sd0;
-  else
-    R_gyro_xc <= R_gyro_xb;
 end
 
 always @(posedge I_clk)
@@ -367,7 +358,7 @@ div_fliter_32s_32s u_gyro_rad (
   .s_axis_divisor_tvalid (1'b1                  ),     // input wire s_axis_divisor_tvalid
   .s_axis_divisor_tdata  (P_57P3_M8192          ),     // 57.29578*8192 input wire [31 : 0] s_axis_divisor_tdata
   .s_axis_dividend_tvalid(R_gyro_vld_d3         ),     // input wire s_axis_dividend_tvalid
-  .s_axis_dividend_tdata (R_gyro_xc             ),     // input wire [31 : 0] s_axis_dividend_tdata
+  .s_axis_dividend_tdata (R_gyro_xb             ),     // input wire [31 : 0] s_axis_dividend_tdata
   .m_axis_dout_tvalid    (W_gyro_rad_vld        ),     // output wire m_axis_dout_tvalid
   .m_axis_dout_tdata     (W_gyro_rad_dout       )      // [45:14] [29:14],[13:0] fix14_13 output wire [31 : 0] m_axis_dout_tdata
 );
@@ -512,7 +503,7 @@ always @(posedge I_clk)
 begin
   if(!I_rst_n)
     R_deg_val_t2 <= 31'sd0;
-  else if(R_deg_val_t1 > P_PPI_MM8192)
+  else if(R_deg_val_t1 >= P_PPI_MM8192)
     R_deg_val_t2 <= R_deg_val_t1 - P_P2PI_MM8192;
   else if(R_deg_val_t1 < P_NPPI_MM8192)
     R_deg_val_t2 <= R_deg_val_t1 + P_P2PI_MM8192;
